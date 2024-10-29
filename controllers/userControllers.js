@@ -1,14 +1,15 @@
 const Models = require("../models/index");
 const Joi = require('joi');
-const helper = require('../helpers/commonHelpers.js');
-const otpManager = require('../helpers/OTP.js');
+const helper = require('../helpers/commonHelpers');
+const otpManager = require('../helpers/OTP');
+const sendMail = require("../controllers/sendMail").sendMail
 
 module.exports = {
     register: async (req, res) => {
         try {
             const schema = Joi.object({
                 name: Joi.string().required(),
-                email: Joi.string().email().required(),
+                email: Joi.string().required(),
                 password: Joi.string().required(),
                 countryCode: Joi.string().required(),
                 phoneNumber: Joi.string().required(),
@@ -23,20 +24,15 @@ module.exports = {
                 phoneNumber: `${payload.countryCode}${payload.phoneNumber}`,
                 profilePic: req.file ? req.file.path : null,
             };
+            let response = await Models.userModel.create(objToSave)
 
-            console.log("Sending OTP to:", objToSave.phoneNumber);
+            await sendMail(payload.email, payload.name);
 
-            const otp = await otpManager.sendOTP(objToSave.phoneNumber);
 
-            await otpManager.sendSMS(objToSave.phoneNumber, `Your OTP is: ${otp}`);
-
-            const user = await Models.userModel.create(objToSave);
-            await Models.otpModel.create({ userId: user.id, otp });
-
-            return res.status(201).send({ message: "User registered successfully", user });
+            return res.status(201).send(response);
         } catch (error) {
             console.error("Registration error:", error);
             return res.status(500).send({ error: error.message || "An error occurred during registration." });
         }
     },
-};
+}

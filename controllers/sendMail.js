@@ -1,6 +1,5 @@
 const nodemailer = require("nodemailer");
-const sendMail = async (req, res) => {
-  
+const sendMail = async (email, name) => {
 
   let transporter = await nodemailer.createTransport({
     host: process.env.MAIL_HOST,
@@ -12,15 +11,14 @@ const sendMail = async (req, res) => {
   });
   let info = await transporter.sendMail({
     from: '"Mitali" <mitaligoura@cqlsys.co.uk>',
-    to: "jeevan13798@gmail.com", 
-    subject: "Welcome Mail", 
+    to: email,
+    subject: "Welcome Mail",
     text: "WELCOME",
-    html: "Welcome dear",
+    html: ` welcome ${email},${name}`,
   });
 
   console.log("Message sent: %s", info.messageId);
-
-  res.json(info);
+  return true
 };
 module.exports = {
   sendMail: sendMail,
